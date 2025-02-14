@@ -4,6 +4,7 @@
 #pragma once
 
 #include <iostream>
+#include <cmath>
 #include <Eigen/dense>
 
 // TODO: Reference additional headers your program requires here.
