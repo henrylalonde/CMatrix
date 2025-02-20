@@ -98,6 +98,7 @@ void lUDecomp(Eigen::MatrixXd& m, Eigen::MatrixXd& l, Eigen::MatrixXd& u) {
 	for (int i = 0; i < cols; i++) {
 		int pivotRow = i;
 		for (int j = pivotRow + 1; j < rows; j++) {
+			if (u(pivotRow, i) == 0) continue;
 			double rowScalar = u(j, i) / u(pivotRow, i);
 			u.row(j) = (u.row(j) * u(pivotRow, i) - u.row(pivotRow) * u(j, i)) / u(pivotRow, i);
 			l(j, i) = rowScalar;
