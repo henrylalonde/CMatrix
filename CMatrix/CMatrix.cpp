@@ -48,7 +48,7 @@ void rref(Eigen::MatrixXd& m) {
 			m.row(maxIndex) = rowSwap;
 		}
 		for (int j = pivotCount + 1; j < rows; j++) { // zero out rows below
-			m.row(j) = m.row(j) * m(pivotCount, i) - m.row(pivotCount) * m(j, i);
+			m.row(j) = (m.row(j) * m(pivotCount, i) - m.row(pivotCount) * m(j, i)) / m(pivotCount, i);
 		}
 		pivotCount++;
 		printMatrix(m);
@@ -74,15 +74,53 @@ void rref(Eigen::MatrixXd& m) {
 	}
 }
 
+void pLUDecomp(Eigen::MatrixXd& m, Eigen::MatrixXd& p, Eigen::MatrixXd& l, Eigen::MatrixXd& u) {
+	int rows = static_cast<int>(m.rows());
+	int cols = static_cast<int>(m.cols());
+
+	Eigen::PartialPivLU<Eigen::MatrixXd> lu(m);
+
+	p = lu.permutationP();
+
+	l = Eigen::MatrixXd::Identity(rows, rows);
+	l.block(0, 0, rows, cols).triangularView<Eigen::StrictlyLower>() = lu.matrixLU();
+	
+	u = lu.matrixLU().triangularView<Eigen::Upper>();
+}
+
+void lUDecomp(Eigen::MatrixXd& m, Eigen::MatrixXd& l, Eigen::MatrixXd& u) {
+	int rows = static_cast<int>(m.rows());
+	int cols = static_cast<int>(m.cols());
+
+	l = Eigen::MatrixXd::Identity(rows, rows);
+	u = m;
+
+	for (int i = 0; i < cols; i++) {
+		int pivotRow = i;
+		for (int j = pivotRow + 1; j < rows; j++) {
+			double rowScalar = u(j, i) / u(pivotRow, i);
+			u.row(j) = (u.row(j) * u(pivotRow, i) - u.row(pivotRow) * u(j, i)) / u(pivotRow, i);
+			l(j, i) = rowScalar;
+		}
+	}
+
+	for (int i = 0; i < cols; i++) {
+		for (int j = i + 1; j < rows; j++) {
+			if (u(j, i) == -0.0) u(j, i) = 0.0;
+		}
+	}
+}
+
 int main()
 {
 	Eigen::MatrixXd m;
 	userInputMatrix(m);
-		
-	Eigen::MatrixXd mRREF = m;
-	rref(mRREF);
+				
+	Eigen::MatrixXd l;
+	Eigen::MatrixXd u;
 
-	std::cout << "--------------\n" << m << "\n" << std::endl;
-	std::cout << mRREF << std::endl;
+	lUDecomp(m, l, u);
+
+	std::cout << "--------------\n" << l << "\n" << u << std::endl;
 	return 0;
 }
