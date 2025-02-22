@@ -3,8 +3,17 @@
 
 #include "CMatrix.h"
 #define printMatrix(m)  std::cout << m << "\n" << std::endl // used for debugging
+#define BUFSIZE 64
+
+void parseInitCommand(Eigen::MatrixXd& m, char* ) {
+	int rows = static_cast<int>(m.rows());
+	int cols = static_cast<int>(m.cols());
+
+
+}
 
 void userInputMatrix(Eigen::MatrixXd& m) {
+	char buf[BUFSIZE];
 	int rows;
 	int columns;
 
@@ -25,6 +34,7 @@ void userInputMatrix(Eigen::MatrixXd& m) {
 			std::cout << m << std::endl;
 		}
 	}
+
 }
 
 void rref(Eigen::MatrixXd& m) {
@@ -114,14 +124,10 @@ void lUDecomp(Eigen::MatrixXd& m, Eigen::MatrixXd& l, Eigen::MatrixXd& u) {
 
 int main()
 {
-	Eigen::MatrixXd m;
-	userInputMatrix(m);
+	std::vector<Eigen::MatrixXd> m(10);
+	Eigen::MatrixXd aux;
+
+	userInputMatrix(m[0]);
 				
-	Eigen::MatrixXd l;
-	Eigen::MatrixXd u;
-
-	lUDecomp(m, l, u);
-
-	std::cout << "--------------\n" << l << "\n" << u << std::endl;
 	return 0;
 }

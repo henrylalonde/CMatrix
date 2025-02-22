@@ -3,8 +3,10 @@
 
 #pragma once
 
-#include <iostream>
 #include <cmath>
-#include <Eigen/dense>
+#include <iostream>
+#include <vector>
+
+#include <Eigen/Dense>
 
 // TODO: Reference additional headers your program requires here.
