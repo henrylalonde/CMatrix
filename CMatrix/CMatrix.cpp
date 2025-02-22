@@ -12,7 +12,7 @@ void parseInitCommand(Eigen::MatrixXd& m, char* ) {
 
 }
 
-void userInputMatrix(Eigen::MatrixXd& m) {
+void userInputMatrix(Eigen::MatrixXd& m, int i) {
 	char buf[BUFSIZE];
 	int rows;
 	int columns;
@@ -127,7 +127,7 @@ int main()
 	std::vector<Eigen::MatrixXd> m(10);
 	Eigen::MatrixXd aux;
 
-	userInputMatrix(m[0]);
+	userInputMatrix(m[0], 0);
 				
 	return 0;
 }
