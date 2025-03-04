@@ -12,7 +12,4 @@ endif()
 # TODO: Add tests and install targets if needed.
 find_package(Eigen3 REQUIRED NO_MODULE)
 
-message("Eigen include directory: ${EIGEN3_INCLUDE_DIR}")
-
-include_directories(${EIGEN3_INCLUDE_DIR})
 target_link_libraries(CMatrix PRIVATE Eigen3::Eigen)

@@ -1,5 +1,4 @@
 ﻿// CMatrix.cpp : the beginning of an era
-// 
 
 #include "CMatrix.h"
 #define printMatrix(m)  std::cout << m << "\n" << std::endl // used for debugging
@@ -30,6 +29,7 @@ void userInputMatrix(Eigen::MatrixXd& m) {
 	}
 
 }
+
 int main()
 {
 	std::vector<Eigen::MatrixXd> in(8);
