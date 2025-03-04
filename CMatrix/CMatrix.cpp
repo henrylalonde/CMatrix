@@ -5,6 +5,15 @@
 #define printMatrix(m)  std::cout << m << "\n" << std::endl // used for debugging
 #define BUFSIZE 64
 
+static char helpMssg[] =	"CMatrix: a terminal matrix calculator for quick maths\n"
+							"--------\n"
+							"Format: <command> <option> <option> <option>... etc.\n\n"
+							"help - displays this help message\n"
+							"pmat - prints all matrices, filled and unfilled\n"
+							"edit <matrix> <options> - edit the matrix of letter <matrix> (not case-sensitive)\n"
+							" -c -> edit matrix column-wise (going down each column)\n"
+							" -r -> edit matrix row-wise (going along each row)\n";
+
 void parseInitCommand(Eigen::MatrixXd& m, char* ) {
 	int rows = static_cast<int>(m.rows());
 	int cols = static_cast<int>(m.cols());
