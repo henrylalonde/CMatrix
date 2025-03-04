@@ -2,8 +2,10 @@
 
 #include <Eigen/Dense>
 
-void rref(Eigen::MatrixXd& m);
+// const signifies input and all other parameters are output
 
-void pLUDecomp(Eigen::MatrixXd& m, Eigen::MatrixXd& p, Eigen::MatrixXd& l, Eigen::MatrixXd& u);
+void rref(const Eigen::MatrixXd& m, Eigen::MatrixXd& rref);
 
-void lUDecomp(Eigen::MatrixXd& m, Eigen::MatrixXd& l, Eigen::MatrixXd& u);
+void pLUDecomp(const Eigen::MatrixXd& m, Eigen::MatrixXd& p, Eigen::MatrixXd& l, Eigen::MatrixXd& u);
+
+void lUDecomp(const Eigen::MatrixXd& m, Eigen::MatrixXd& l, Eigen::MatrixXd& u);

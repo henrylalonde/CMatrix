@@ -35,7 +35,9 @@ int main()
 	std::vector<Eigen::MatrixXd> in(8);
 	std::vector<Eigen::MatrixXd> out(3);
 
-	rref(in[0]);
+	userInputMatrix(in[0]);
+	rref(in[0], out[0]);
+	std::cout << out[0];
 	
 	return 0;
 }

@@ -1,46 +1,48 @@
 #include "operations.h"
 
-void rref(Eigen::MatrixXd& m) {
+void rref(const Eigen::MatrixXd& m, Eigen::MatrixXd& rref) {
 	Eigen::RowVectorXd rowSwap;
 	int rows = static_cast<int>(m.rows());
 	int cols = static_cast<int>(m.cols());
+
+	rref = m;
 
 	int pivotCount = 0;
 
 	for (int i = 0; i < cols && pivotCount < rows; i++) {
 		int maxIndex = pivotCount;
 		for (int j = pivotCount + 1; j < rows; j++) {
-			if (fabs(m(j, i)) > fabs(m(maxIndex, i))) {
+			if (fabs(rref(j, i)) > fabs(rref(maxIndex, i))) {
 				maxIndex = j;
 			}
 		}
-		if (m(maxIndex, i) == 0) continue;
+		if (rref(maxIndex, i) == 0) continue;
 		if (maxIndex > pivotCount) { // bring row with largest value to pivoting position
-			rowSwap = m.row(pivotCount).eval();
-			m.row(pivotCount) = m.row(maxIndex);
-			m.row(maxIndex) = rowSwap;
+			rowSwap = rref.row(pivotCount).eval();
+			rref.row(pivotCount) = rref.row(maxIndex);
+			rref.row(maxIndex) = rowSwap;
 		}
 		for (int j = pivotCount + 1; j < rows; j++) { // zero out rows below
-			m.row(j) = (m.row(j) * m(pivotCount, i) - m.row(pivotCount) * m(j, i)) / m(pivotCount, i);
+			rref.row(j) = (rref.row(j) * rref(pivotCount, i) - rref.row(pivotCount) * rref(j, i)) / rref(pivotCount, i);
 		}
 		pivotCount++;
 	}
 	for (int i = pivotCount - 1; i >= 0; i--) { // back substitution
 		int pivotCol = 0;
 		for (int j = 0; j < cols; j++) { // locate pivot
-			if (m(i, j) != 0) {
+			if (rref(i, j) != 0) {
 				pivotCol = j;
 				break;
 			}
 		}
 		for (int j = i - 1; j >= 0; j--) { // zero out rows above
-			m.row(j) = m.row(j) * m(i, pivotCol) - m.row(i) * m(j, pivotCol);
+			rref.row(j) = rref.row(j) * rref(i, pivotCol) - rref.row(i) * rref(j, pivotCol);
 		}
-		m.row(i) = m.row(i) / m(i, pivotCol); 
+		rref.row(i) = rref.row(i) / rref(i, pivotCol); 
 	}
 	for (int i = 0; i < rows; i++) { // i don't like stupid -0.0
 		for (int j = 0; j < cols; j++) {
-			if (m(i, j) == -0.0) m(i, j) = 0.0;
+			if (rref(i, j) == -0.0) rref(i, j) = 0.0;
 		}
 	}
 }
