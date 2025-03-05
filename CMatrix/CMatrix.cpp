@@ -6,6 +6,15 @@
 
 char buf[BUFSIZE];
 
+unsigned int hashString(const char c[]) {
+	unsigned int hash = 622930942;
+	while(*c) {
+		hash = hash * 4567 + (907966620 * (*c));
+		c++;
+	}
+	return hash % 61;
+} // make a file with a new function to plug in random numbers and see what makes the least collisions
+
 void userInputMatrix(Eigen::MatrixXd& m) {
 	int rows;
 	int columns;
@@ -34,10 +43,29 @@ int main()
 {
 	std::vector<Eigen::MatrixXd> in(8);
 	std::vector<Eigen::MatrixXd> out(3);
-
+/*
 	userInputMatrix(in[0]);
 	rref(in[0], out[0]);
 	std::cout << out[0];
+*/	
+	int hashes[NUM_COMMANDS];
+	
+	for(int i = 0; i < NUM_COMMANDS; i++) {
+		hashes[i] = hashString(commands[i]);
+		std::cout << hashes[i] << std::endl;
+	}
+
+	int collisions = 0;
+	for(int i = 0; i < NUM_COMMANDS; i++) {
+		int check = hashes[i];
+		for (int j = i + 1; j < NUM_COMMANDS; j++) {
+			if (hashes[i] == hashes[j]) {
+				collisions++;
+				std::cout << "HIT " << commands[i] << " and " << commands[j] << " - " << hashes[i] << std::endl;
+			}
+		}
+	}
+	std::cout <<"Collisions: " << collisions << std::endl;
 	
 	return 0;
 }
