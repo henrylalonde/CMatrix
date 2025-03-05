@@ -2,11 +2,19 @@
 
 #include "CMatrix.h"
 #define printMatrix(m)  std::cout << m << "\n" << std::endl // used for debugging
-#define BUFSIZE 128
+#define BUFSIZE 64
+#define NUM_COMMANDS sizeof(commands) / sizeof(char*)
+#define mul 6765884
+#define mod 23
 
-char buf[BUFSIZE];
+static char buf[BUFSIZE];
 
-const char* commands[] = {
+typedef struct cmd {
+	const char *key;
+	void (*exe)();
+} cmd;
+
+static const char* commands[] = {
 	"help",
 	"pmat",
 	"pout",
@@ -30,17 +38,10 @@ const char* commands[] = {
 	"sto"
 };
 
-#define NUM_COMMANDS sizeof(commands) / sizeof(char*)
+static cmd cmdArray[mod];
 
-typedef struct cmd {
-	const char *key;
-	void (*exe)();
-} cmd;
-
-cmd cmdArray[NUM_COMMANDS];
-
-#define mul 6765884
-#define mod 23
+static std::vector<Eigen::MatrixXd> in(8);
+static std::vector<Eigen::MatrixXd> out(3);
 
 unsigned int hashString(const char c[]) {
 	unsigned int hash = 0;
@@ -100,10 +101,17 @@ void cmdHelp() {
 	std::cout << help << std::endl;
 }
 
-void (*cmdPointers[NUM_COMMANDS])() = {
-	cmdHelp 
-};
+void cmdPmat() {
+	for (int i = 0; i < 7; i++) {
+		char letter = 'A';
+		std::cout << "[" << static_cast<char>(letter + i) << "]" << std::endl;
+	}
+}
 
+void (*cmdPointers[NUM_COMMANDS])() = {
+	cmdHelp,
+	cmdPmat
+};
 
 void cmdTableInit() {
 	for (int i = 0; i < NUM_COMMANDS; i++) {
@@ -119,11 +127,7 @@ int main()
 	cmdTableInit();
 
 	cmdArray[hashString("help")].exe();
-
-
-	std::vector<Eigen::MatrixXd> in(8);
-	std::vector<Eigen::MatrixXd> out(3);
-
+	cmdArray[hashString("pmat")].exe();
 
 	return 0;
 }
