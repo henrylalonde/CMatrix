@@ -38,29 +38,3 @@ const char help[] =
 "\n"
 "sto <output> <matrix> - store the previous output in one of the input matrices.\n"
 ;
-
-const char* commands[] = {
-	"help",
-	"pmat",
-	"pout",
-	"done",
-	"edit",
-	"d",
-	"c",
-	"r",
-	"e",
-	"I",
-	"clr",
-	"sv",
-	"add",
-	"mul",
-	"inv",
-	"det",
-	"rref",
-	"plu",
-	"lu",
-	"eig",
-	"sto"
-};
-
-#define NUM_COMMANDS sizeof(commands) / sizeof(char*)

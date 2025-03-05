@@ -6,6 +6,39 @@
 
 char buf[BUFSIZE];
 
+const char* commands[] = {
+	"help",
+	"pmat",
+	"pout",
+	"done",
+	"edit",
+	"d",
+	"c",
+	"r",
+	"e",
+	"I",
+	"clr",
+	"sv",
+	"add",
+	"mul",
+	"inv",
+	"det",
+	"rref",
+	"plu",
+	"lu",
+	"eig",
+	"sto"
+};
+
+#define NUM_COMMANDS sizeof(commands) / sizeof(char*)
+
+typedef struct cmd {
+	const char *key;
+	void (*exe)();
+} cmd;
+
+cmd cmdArray[NUM_COMMANDS];
+
 #define mul 6765884
 #define mod 23
 
@@ -39,7 +72,6 @@ void validateHashing() {
 	std::cout <<"Collisions: " << collisions << std::endl;
 }
 
-
 void userInputMatrix(Eigen::MatrixXd& m) {
 	int rows;
 	int columns;
@@ -64,11 +96,33 @@ void userInputMatrix(Eigen::MatrixXd& m) {
 
 }
 
+void cmdHelp() {
+	std::cout << help << std::endl;
+}
+
+void (*cmdPointers[NUM_COMMANDS])() = {
+	cmdHelp 
+};
+
+
+void cmdTableInit() {
+	for (int i = 0; i < NUM_COMMANDS; i++) {
+		int hash = hashString(commands[i]);
+		cmdArray[hash].key = commands[i];
+		cmdArray[hash].exe = cmdPointers[i];
+	}
+
+}
+
 int main()
 {
+	cmdTableInit();
+
+	cmdArray[hashString("help")].exe();
+
+
 	std::vector<Eigen::MatrixXd> in(8);
 	std::vector<Eigen::MatrixXd> out(3);
-	
 
 
 	return 0;
