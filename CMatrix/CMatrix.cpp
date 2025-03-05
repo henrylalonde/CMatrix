@@ -4,10 +4,10 @@
 #define printMatrix(m)  std::cout << m << "\n" << std::endl // used for debugging
 #define BUFSIZE 64
 #define NUM_COMMANDS sizeof(commands) / sizeof(char*)
+#define NUM_INPUT_MATRICES 8
+#define NUM_OUTPUT_MATRICES 3
 #define mul 6765884
 #define mod 23
-
-static char buf[BUFSIZE];
 
 typedef struct cmd {
 	const char *key;
@@ -40,8 +40,12 @@ static const char* commands[] = {
 
 static cmd cmdArray[mod];
 
-static std::vector<Eigen::MatrixXd> in(8);
-static std::vector<Eigen::MatrixXd> out(3);
+static std::vector<Eigen::MatrixXd> in(NUM_INPUT_MATRICES);
+static std::vector<Eigen::MatrixXd> out(NUM_OUTPUT_MATRICES);
+
+static char buf[BUFSIZE];
+
+static int done;
 
 unsigned int hashString(const char c[]) {
 	unsigned int hash = 0;
@@ -72,7 +76,7 @@ void validateHashing() {
 	}
 	std::cout <<"Collisions: " << collisions << std::endl;
 }
-
+// get rid of user input matrix after edit mode is implemented
 void userInputMatrix(Eigen::MatrixXd& m) {
 	int rows;
 	int columns;
@@ -102,15 +106,31 @@ void cmdHelp() {
 }
 
 void cmdPmat() {
-	for (int i = 0; i < 7; i++) {
+	for (int i = 0; i < NUM_INPUT_MATRICES; i++) {
 		char letter = 'A';
-		std::cout << "[" << static_cast<char>(letter + i) << "]" << std::endl;
+		std::cout << "[" << static_cast<char>(letter + i) << "] ";
+		std::cout << static_cast<int>(in[i].rows()) << "x" << static_cast<int>(in[i].cols()) << std::endl;
+		std::cout << in[i] << std::endl;
 	}
+}
+
+void cmdPout() {
+	for (int i = 0; i < NUM_OUTPUT_MATRICES; i++) {
+		std::cout << "[" << i + 1 << "] ";
+		std::cout << static_cast<int>(out[i].rows()) << "x" << static_cast<int>(out[i].cols()) << std::endl;
+		std::cout << out[i] << std::endl;
+	}
+}
+
+void cmdDone() {
+	done = 1;
 }
 
 void (*cmdPointers[NUM_COMMANDS])() = {
 	cmdHelp,
-	cmdPmat
+	cmdPmat,
+	cmdPout,
+	cmdDone
 };
 
 void cmdTableInit() {
@@ -124,10 +144,34 @@ void cmdTableInit() {
 
 int main()
 {
+	char word[5];
+
 	cmdTableInit();
 
-	cmdArray[hashString("help")].exe();
-	cmdArray[hashString("pmat")].exe();
+	done = 0;
 
+	while (!done) {
+	input:
+		std::cin >> buf;
+		int i;
+		for (i = 0; i < BUFSIZE; i++) {
+			if (buf[i] == '\n' || buf[i] == '\0' || buf[i] == ' ') {
+				word[i] = '\0';
+				break;
+			}
+			word[i] = buf[i];
+		}
+		int hash = hashString(word);
+
+		// validate match
+		for (i = 0; word[i] != '\0' || cmdArray[hash].key[i] != '\0'; i++) {
+			if (word[i] != cmdArray[hash].key[i]) {
+				std::cout << "Invalid command" << std::endl; 
+				// may also need to zero out buf, but we'll see
+				goto input; 
+			}
+		}
+		cmdArray[hash].exe();
+	}
 	return 0;
 }
