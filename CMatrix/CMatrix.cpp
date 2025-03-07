@@ -155,9 +155,10 @@ void cmdEdit() {
 	}
 	char matrixI;
 	std::cin >> matrixI;
-	matrixI = matrixI - 'A';
-	if (matrixI >= 0 && matrixI < 8) {
-		editingMatrix = matrixI;
+	if (matrixI - 'A' >= 0 && matrixI - 'A' < 8) {
+		editingMatrix = matrixI - 'A';
+	} else if (matrixI - 'a' >= 0 && matrixI - 'a' < 8) {
+		editingMatrix = matrixI - 'a';
 	} else {
 		std::cout << "Please enter a valid matrix letter (A through H, capitalized)" << std::endl;
 		std::cin.clear();
