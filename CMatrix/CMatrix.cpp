@@ -2,6 +2,7 @@
 
 #include "CMatrix.h"
 #define printMatrix(m)  std::cout << m << "\n" << std::endl // used for debugging
+#define flushCin() std::cin.clear(); std::cin.ignore(INT_MAX, '\n')
 #define NUM_COMMANDS sizeof(commands) / sizeof(char*)
 #define NUM_INPUT_MATRICES 8
 #define NUM_OUTPUT_MATRICES 3
@@ -12,6 +13,8 @@ typedef struct cmd {
 	const char *key;
 	void (*exe)();
 } cmd;
+
+static cmd cmdArray[mod];
 
 static const char* commands[] = {
 	"help",
@@ -37,18 +40,25 @@ static const char* commands[] = {
 	"sto"
 };
 
-static cmd cmdArray[mod];
-
-static std::vector<Eigen::MatrixXd> in(NUM_INPUT_MATRICES);
-static std::vector<Eigen::MatrixXd> out(NUM_OUTPUT_MATRICES);
-static Eigen::MatrixXd swap;
-
 static bool done;
 static bool editing;
 static bool rowWise;
 static int editingMatrix;
 static int editingRow;
 static int editingCol;
+
+static std::vector<Eigen::MatrixXd> in(NUM_INPUT_MATRICES);
+static std::vector<Eigen::MatrixXd> out(NUM_OUTPUT_MATRICES);
+static Eigen::MatrixXd swap;
+
+void printEditInterface() {
+	int rows = static_cast<int>(in[editingMatrix].rows());
+	int cols = static_cast<int>(in[editingMatrix].cols());
+	std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "] ";
+	std::cout << rows << "x" << cols << std::endl;
+	std::cout << in[editingMatrix] << std::endl; // replace with custom function that highlights current entry
+	std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "](" << editingRow << ", " << editingCol << ") ";
+}
 
 unsigned int hashString(const char c[]) {
 	unsigned int hash = 0;
@@ -90,8 +100,8 @@ input:
 	for (int i = 0; word[i] != '\0' || cmdArray[hash].key[i] != '\0'; i++) {
 		if (word[i] != cmdArray[hash].key[i]) {
 			std::cout << "Invalid command" << std::endl; 
-			std::cin.clear();
-			std::cin.ignore(INT_MAX, '\n');
+			flushCin();
+			if (editing) printEditInterface();
 			goto input; 
 		}
 	}
@@ -151,7 +161,11 @@ void cmdDone() {
 void cmdEdit() {
 	if (editing) {
 		std::cout << "Exit current matrix before editing another" << std::endl;
+		flushCin();
 		return;
+	}
+	if (std::cin.peek() == '\n') {
+		std::cout << "Enter matrix letter A through H: " << std::endl;
 	}
 	char matrixI;
 	std::cin >> matrixI;
@@ -161,8 +175,7 @@ void cmdEdit() {
 		editingMatrix = matrixI - 'a';
 	} else {
 		std::cout << "Please enter a valid matrix letter (A through H, capitalized)" << std::endl;
-		std::cin.clear();
-		std::cin.ignore(INT_MAX, '\n');
+		flushCin();
 		return;
 	}
 	editingRow = 0;
@@ -171,13 +184,11 @@ void cmdEdit() {
 	editing = true;
 
 	while (editing && !done) {
+		printEditInterface();
+
 		double inputNum;
 		int rows = static_cast<int>(in[editingMatrix].rows());
 		int cols = static_cast<int>(in[editingMatrix].cols());
-		std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "] ";
-		std::cout << rows << "x" << cols << std::endl;
-		std::cout << in[editingMatrix] << std::endl; // replace with custom function that highlights current entry
-		std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "](" << editingRow << ", " << editingCol << ") ";
 		if((std::cin >> inputNum).good()) {
 			in[editingMatrix](editingRow, editingCol) = inputNum;
 			if (rowWise) {
@@ -206,18 +217,31 @@ void cmdEdit() {
 }
 
 void cmdDimension() {
+	if (!editing) {
+		std::cout << "Edit a matrix to change dimensions" << std::endl;
+		flushCin();
+		return;
+	}
 	int oldRows = static_cast<int>(in[editingMatrix].rows());
 	int oldCols = static_cast<int>(in[editingMatrix].cols());
 
 	int newRows;
 	int newCols;
 
+	if (std::cin.peek() == '\n') {
+		std::cout << "Enter number of rows: " << std::endl;
+	}
 	if ((std::cin >> newRows).bad()) {
-		std::cout << "Enter an integer number for rows" << std::endl;
+		std::cout << "Invalid number of rows" << std::endl;
+		flushCin();
 		return;
 	}
+	if (std::cin.peek() == '\n') {
+		std::cout << "Enter number of columns: " << std::endl;
+	}
 	if ((std::cin >> newCols).bad()) {
-		std::cout << "Enter an integer number for columns" << std::endl;
+		std::cout << "Invalid number of columns" << std::endl;
+		flushCin();
 		return;
 	}
 	swap = in[editingMatrix];
@@ -234,22 +258,89 @@ void cmdDimension() {
 	}
 }
 
+void cmdColumn() {
+	if (!editing) {
+		std::cout << "Edit a matrix to select column" << std::endl;
+		flushCin();
+		return;
+	}
+	int temp;
+	int cols = static_cast<int>(in[editingMatrix].cols());
+		
+	if (std::cin.peek() == '\n') {
+		rowWise = false;
+		editingRow = 0;
+		editingCol = 0;
+		return;
+	}
+	if ((std::cin >> temp).bad()) {
+		std::cout << "Invalid column number" << std::endl;
+		flushCin();
+		return;
+	}
+	if (temp > cols || temp < 1) {
+		std::cout << "Matrix does not contain column " << temp << std::endl;
+		flushCin();
+		return;
+	}
+	
+	rowWise = false;
+	editingRow = 0;
+	editingCol = temp - 1;
+}
+
+void cmdRow() {
+	if (!editing) {
+		std::cout << "Edit a matrix to select row" << std::endl;
+		flushCin();
+		return;
+	}
+	int temp;
+	int rows = static_cast<int>(in[editingMatrix].rows());
+
+	if (std::cin.peek() == '\n') {
+		rowWise = true;
+		editingRow = 0;
+		editingCol = 0;
+		return;
+	}
+	if ((std::cin >> temp).bad()) {
+		std::cout << "Invalid row number" << std::endl;
+		flushCin();
+		return;
+	}
+	if (temp > rows || temp < 1) {
+		std::cout << "Matrix does not contain contain row " << temp << std::endl;
+		flushCin();
+		return;
+	}
+	rowWise = true;
+	editingCol = 0;
+	editingRow = temp - 1;
+}
+
 void (*cmdPointers[NUM_COMMANDS])() = {
 	cmdHelp,
 	cmdPmat,
 	cmdPout,
 	cmdDone,
 	cmdEdit,
-	cmdDimension
+	cmdDimension,
+	cmdColumn,
+	cmdRow
 };
+const char* noCmd = "\n";
 
 void cmdTableInit() {
+	for (int i = 0; i < mod; i++) {
+		cmdArray[i].key = noCmd;
+		cmdArray[i].exe = 0;
+	}
 	for (int i = 0; i < NUM_COMMANDS; i++) {
 		int hash = hashString(commands[i]);
 		cmdArray[hash].key = commands[i];
 		cmdArray[hash].exe = cmdPointers[i];
 	}
-
 }
 
 int main()

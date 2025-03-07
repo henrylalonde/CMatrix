@@ -17,7 +17,7 @@ const char help[] =
 "edit <matrix> - enter edit mode on the specified matrix\n"
 "	Edit Mode:\n"
 "	<float> - specify the value for the current entry\n"
-"	d <rows> <columns> - resize matrix to specified dimensions (default 1 1)\n"
+"	d <rows> <columns> - resize matrix to specified dimensions\n"
 "	c <column> - edit matrix column-wise starting at specified column (default 1)\n"
 "	r <row> - edit matrix row-wise starting at specified row (default 1)\n"
 "	e <row> <column> - jump to edit a specific entry (default 1 1)\n"
