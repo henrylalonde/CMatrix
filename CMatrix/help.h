@@ -21,7 +21,6 @@ const char help[] =
 "	c <column> - edit matrix column-wise starting at specified column (default 1)\n"
 "	r <row> - edit matrix row-wise starting at specified row (default 1)\n"
 "	e <row> <column> - jump to edit a specific entry (default 1 1)\n"
-
 "	I - turn matrix into identity matrix with ones along diagonal\n"
 "	clr - set all entries to 0\n"
 "	sv - save current matrix and exit edit mode\n"

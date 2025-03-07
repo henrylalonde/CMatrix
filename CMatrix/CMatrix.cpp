@@ -2,7 +2,6 @@
 
 #include "CMatrix.h"
 #define printMatrix(m)  std::cout << m << "\n" << std::endl // used for debugging
-#define BUFSIZE 64
 #define NUM_COMMANDS sizeof(commands) / sizeof(char*)
 #define NUM_INPUT_MATRICES 8
 #define NUM_OUTPUT_MATRICES 3
@@ -42,10 +41,14 @@ static cmd cmdArray[mod];
 
 static std::vector<Eigen::MatrixXd> in(NUM_INPUT_MATRICES);
 static std::vector<Eigen::MatrixXd> out(NUM_OUTPUT_MATRICES);
+static Eigen::MatrixXd swap;
 
-static char buf[BUFSIZE];
-
-static int done;
+static bool done;
+static bool editing;
+static bool rowWise;
+static int editingMatrix;
+static int editingRow;
+static int editingCol;
 
 unsigned int hashString(const char c[]) {
 	unsigned int hash = 0;
@@ -56,12 +59,12 @@ unsigned int hashString(const char c[]) {
 	return hash % mod;
 }
 
-void validateHashing() {
+void printHashCollisions() {
 	int hashes[NUM_COMMANDS];
 	
 	for(int i = 0; i < NUM_COMMANDS; i++) {
 		hashes[i] = hashString(commands[i]);
-		std::cout << hashes[i] << std::endl;
+		std::cout << commands[i] << " -> " << hashes[i] << std::endl;
 	}
 
 	int collisions = 0;
@@ -76,6 +79,25 @@ void validateHashing() {
 	}
 	std::cout <<"Collisions: " << collisions << std::endl;
 }
+
+unsigned int getCommandHash() {
+	char word[5];
+input:
+	std::cin >> word;
+	unsigned int hash = hashString(word);
+
+	// validate match
+	for (int i = 0; word[i] != '\0' || cmdArray[hash].key[i] != '\0'; i++) {
+		if (word[i] != cmdArray[hash].key[i]) {
+			std::cout << "Invalid command" << std::endl; 
+			std::cin.clear();
+			std::cin.ignore(INT_MAX, '\n');
+			goto input; 
+		}
+	}
+	return hash;
+}
+
 // get rid of user input matrix after edit mode is implemented
 void userInputMatrix(Eigen::MatrixXd& m) {
 	int rows;
@@ -123,14 +145,101 @@ void cmdPout() {
 }
 
 void cmdDone() {
-	done = 1;
+	done = true;
+}
+
+void cmdEdit() {
+	if (editing) {
+		std::cout << "Exit current matrix before editing another" << std::endl;
+		return;
+	}
+	char matrixI;
+	std::cin >> matrixI;
+	matrixI = matrixI - 'A';
+	if (matrixI >= 0 && matrixI < 8) {
+		editingMatrix = matrixI;
+	} else {
+		std::cout << "Please enter a valid matrix letter (A through H, capitalized)" << std::endl;
+		std::cin.clear();
+		std::cin.ignore(INT_MAX, '\n');
+		return;
+	}
+	editingRow = 0;
+	editingCol = 0;
+	rowWise = true;
+	editing = true;
+
+	while (editing && !done) {
+		double inputNum;
+		int rows = static_cast<int>(in[editingMatrix].rows());
+		int cols = static_cast<int>(in[editingMatrix].cols());
+		std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "] ";
+		std::cout << rows << "x" << cols << std::endl;
+		std::cout << in[editingMatrix] << std::endl; // replace with custom function that highlights current entry
+		std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "](" << editingRow << ", " << editingCol << ") ";
+		if((std::cin >> inputNum).good()) {
+			in[editingMatrix](editingRow, editingCol) = inputNum;
+			if (rowWise) {
+				editingCol++;
+				if (editingCol >= cols) {
+					editingCol = 0;
+					editingRow++;
+				}
+			} else {
+				editingRow++;
+				if (editingRow >= rows) {
+					editingRow = 0;
+					editingCol++;
+				}
+			}
+			if (editingRow >= rows || editingCol >= cols) {
+				editingRow = 0;
+				editingCol = 0;
+			}
+		} else {
+			std::cin.clear();
+			int hash = getCommandHash();
+			cmdArray[hash].exe();
+		}
+	}
+}
+
+void cmdDimension() {
+	int oldRows = static_cast<int>(in[editingMatrix].rows());
+	int oldCols = static_cast<int>(in[editingMatrix].cols());
+
+	int newRows;
+	int newCols;
+
+	if ((std::cin >> newRows).bad()) {
+		std::cout << "Enter an integer number for rows" << std::endl;
+		return;
+	}
+	if ((std::cin >> newCols).bad()) {
+		std::cout << "Enter an integer number for columns" << std::endl;
+		return;
+	}
+	swap = in[editingMatrix];
+	in[editingMatrix].resize(newRows, newCols);
+
+	for (int i = 0; i < newRows; i++) {
+		for (int j = 0; j < newCols; j++) {
+			if (i < oldRows && j < oldCols) {
+				in[editingMatrix](i, j) = swap(i, j);
+			} else {
+				in[editingMatrix](i, j) = 0;
+			}
+		}
+	}
 }
 
 void (*cmdPointers[NUM_COMMANDS])() = {
 	cmdHelp,
 	cmdPmat,
 	cmdPout,
-	cmdDone
+	cmdDone,
+	cmdEdit,
+	cmdDimension
 };
 
 void cmdTableInit() {
@@ -144,33 +253,13 @@ void cmdTableInit() {
 
 int main()
 {
-	char word[5];
-
 	cmdTableInit();
 
-	done = 0;
+	done = false;
+	editing = false;
 
 	while (!done) {
-	input:
-		std::cin >> buf;
-		int i;
-		for (i = 0; i < BUFSIZE; i++) {
-			if (buf[i] == '\n' || buf[i] == '\0' || buf[i] == ' ') {
-				word[i] = '\0';
-				break;
-			}
-			word[i] = buf[i];
-		}
-		int hash = hashString(word);
-
-		// validate match
-		for (i = 0; word[i] != '\0' || cmdArray[hash].key[i] != '\0'; i++) {
-			if (word[i] != cmdArray[hash].key[i]) {
-				std::cout << "Invalid command" << std::endl; 
-				// may also need to zero out buf, but we'll see
-				goto input; 
-			}
-		}
+		unsigned int hash = getCommandHash();
 		cmdArray[hash].exe();
 	}
 	return 0;
