@@ -6,6 +6,7 @@
 #define NUM_COMMANDS sizeof(commands) / sizeof(char*)
 #define NUM_INPUT_MATRICES 8
 #define NUM_OUTPUT_MATRICES 3
+#define MAX_PRINT_LENGTH 11
 #define mul 6765884
 #define mod 23
 
@@ -54,10 +55,11 @@ static Eigen::MatrixXd swap;
 void printEditInterface() {
 	int rows = static_cast<int>(in[editingMatrix].rows());
 	int cols = static_cast<int>(in[editingMatrix].cols());
-	std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "] ";
+	std::cout << "\nMatrix[" << static_cast<char>(editingMatrix + 'A') << "] ";
 	std::cout << rows << "x" << cols << std::endl;
+
 	std::cout << in[editingMatrix] << std::endl; // replace with custom function that highlights current entry
-	std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "](" << editingRow << ", " << editingCol << ") ";
+	std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "](" << editingRow + 1 << ", " << editingCol + 1 << ") ";
 }
 
 unsigned int hashString(const char c[]) {
@@ -106,31 +108,6 @@ input:
 		}
 	}
 	return hash;
-}
-
-// get rid of user input matrix after edit mode is implemented
-void userInputMatrix(Eigen::MatrixXd& m) {
-	int rows;
-	int columns;
-
-	std::cout << "Rows: ";
-	std::cin >> rows;
-
-	std::cout << "Columns: ";
-	std::cin >> columns;
-
-	m.resize(rows, columns);
-	m.setZero();
-	std::cout << m << std::endl;
-
-	for (int i = 0; i < rows; i++) {
-		for (int j = 0; j < columns; j++) {
-			std::cout << "m(" << i + 1 << ", " << j + 1 << ") = ";
-			std::cin >> m(i, j);
-			std::cout << m << std::endl;
-		}
-	}
-
 }
 
 void cmdHelp() {
@@ -190,7 +167,9 @@ void cmdEdit() {
 		int rows = static_cast<int>(in[editingMatrix].rows());
 		int cols = static_cast<int>(in[editingMatrix].cols());
 		if((std::cin >> inputNum).good()) {
-			in[editingMatrix](editingRow, editingCol) = inputNum;
+			if (editingRow < rows && editingCol < cols) {
+				in[editingMatrix](editingRow, editingCol) = inputNum;
+			}
 			if (rowWise) {
 				editingCol++;
 				if (editingCol >= cols) {
@@ -319,6 +298,43 @@ void cmdRow() {
 	editingRow = temp - 1;
 }
 
+void cmdEntry() {
+	if (!editing) {
+		std::cout << "Edit a matrix to select entry" << std::endl;
+		flushCin();
+		return;
+	}
+	int row;
+	int col;
+
+	if (std::cin.peek() == '\n') {
+		std::cout << "Enter row of the desired entry: " << std::endl;
+	}
+	if ((std::cin >> row).bad()) {
+		std::cout << "Invalid row number" << std::endl;
+		flushCin();
+		return;
+	}
+	if (std::cin.peek() == '\n') {
+		std::cout << "Enter column of the desired entry " << std::endl;
+	}
+	if ((std::cin >> col).bad()) {
+		std::cout << "Invalid number of columns" << std::endl;
+		flushCin();
+		return;
+	}
+
+	int rows = static_cast<int>(in[editingMatrix].rows());
+	int cols = static_cast<int>(in[editingMatrix].cols());
+
+	if (row > rows || row < 1 || col > cols || col < 1) {
+		std::cout << "No entry at (" << row << ", " << col << ")" << std::endl;
+		return;
+	}
+	editingRow = row - 1;
+	editingCol = col - 1;
+}
+
 void (*cmdPointers[NUM_COMMANDS])() = {
 	cmdHelp,
 	cmdPmat,
@@ -327,7 +343,8 @@ void (*cmdPointers[NUM_COMMANDS])() = {
 	cmdEdit,
 	cmdDimension,
 	cmdColumn,
-	cmdRow
+	cmdRow,
+	cmdEntry
 };
 const char* noCmd = "\n";
 
