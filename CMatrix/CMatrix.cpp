@@ -57,9 +57,18 @@ void printEditInterface() {
 	int cols = static_cast<int>(in[editingMatrix].cols());
 	std::cout << "\nMatrix[" << static_cast<char>(editingMatrix + 'A') << "] ";
 	std::cout << rows << "x" << cols << std::endl;
-
 	std::cout << in[editingMatrix] << std::endl; // replace with custom function that highlights current entry
 	std::cout << "[" << static_cast<char>(editingMatrix + 'A') << "](" << editingRow + 1 << ", " << editingCol + 1 << ") ";
+}
+
+int alphaToIndex(const char c) {
+	if (c - 'A' >= 0 && c - 'A' < NUM_INPUT_MATRICES) {
+		return c - 'A';
+	} else if (c - 'a' >= 0 && c - 'a' < NUM_INPUT_MATRICES) {
+		return c - 'a';
+	} else {
+		return -1;
+	}
 }
 
 unsigned int hashString(const char c[]) {
@@ -146,12 +155,9 @@ void cmdEdit() {
 	}
 	char matrixI;
 	std::cin >> matrixI;
-	if (matrixI - 'A' >= 0 && matrixI - 'A' < 8) {
-		editingMatrix = matrixI - 'A';
-	} else if (matrixI - 'a' >= 0 && matrixI - 'a' < 8) {
-		editingMatrix = matrixI - 'a';
-	} else {
-		std::cout << "Please enter a valid matrix letter (A through H, capitalized)" << std::endl;
+	editingMatrix = alphaToIndex(matrixI);
+	if (editingMatrix == -1) {
+		std::cout << "Please enter a valid matrix letter (A to H or a to h)" << std::endl;
 		flushCin();
 		return;
 	}
@@ -193,6 +199,7 @@ void cmdEdit() {
 			cmdArray[hash].exe();
 		}
 	}
+	std::cout << "Edit mode exited\n" << std::endl;
 }
 
 void cmdDimension() {
@@ -335,6 +342,92 @@ void cmdEntry() {
 	editingCol = col - 1;
 }
 
+void cmdIdentity() {
+	if (!editing) {
+		std::cout << "Edit a matrix to fill in with the identity" << std::endl;
+		return;
+	}
+	int rows = static_cast<int>(in[editingMatrix].rows());
+	int cols = static_cast<int>(in[editingMatrix].cols());
+
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++) {
+			if (i == j) {
+				in[editingMatrix](i, j) = 1.0;
+			} else {
+				in[editingMatrix](i, j) = 0.0;
+			}
+		}
+	}
+	editingRow = 0;
+	editingCol = 0;
+}
+
+void cmdClear() {
+	if (!editing) {
+		std::cout << "Edit a matrix to clear it" << std::endl;
+		return;
+	}
+	int rows = static_cast<int>(in[editingMatrix].rows());
+	int cols = static_cast<int>(in[editingMatrix].cols());
+
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++) {
+			in[editingMatrix](i, j) = 0.0;
+		}
+	}
+	editingRow = 0;
+	editingCol = 0;
+}
+
+void cmdSave() {
+	if (!editing) {
+		std::cout << "Edit a matrix to save it" << std::endl;
+		return;
+	}
+	std::cout << "Matrix saved. Exiting edit mode..." << std::endl;
+	editing = false;
+}
+
+void cmdAdd() {
+	if (editing) {
+		std::cout << "Save matrix before doing operations" << std::endl;
+		return;
+	}
+	char m1;
+	char m2;
+
+	if (std::cin.peek() == '\n') {
+		std::cout << "Specify first operand (a matrix A to H or a to h)" << std::endl;
+	}
+	std::cin >> m1;
+	m1 = alphaToIndex(m1);
+	if (m1 == -1) {
+		std::cout << "Invalid first operand" << std::endl;
+		flushCin();
+		return;
+	}
+	if (std::cin.peek() == '\n') {
+		std::cout << "Specify second operand (a matrix A to H or a to h)" << std::endl;
+	}
+	std::cin >> m2;
+	m2 = alphaToIndex(m2);
+	if (m2 == -1) {
+		std::cout << "Invalid second operand" << std::endl;
+		flushCin();
+		return;
+	}
+
+	if (in[m1].rows() != in[m2].rows() || in[m1].cols() != in[m2].cols()) {
+		std::cout << "Matrices must have same dimensions" << std::endl;
+		flushCin();
+		return;
+	}
+	
+	out[0] = in[m1] + in[m2];
+	std::cout << out[0] << std::endl;
+}
+
 void (*cmdPointers[NUM_COMMANDS])() = {
 	cmdHelp,
 	cmdPmat,
@@ -344,7 +437,11 @@ void (*cmdPointers[NUM_COMMANDS])() = {
 	cmdDimension,
 	cmdColumn,
 	cmdRow,
-	cmdEntry
+	cmdEntry,
+	cmdIdentity,
+	cmdClear,
+	cmdSave,
+	cmdAdd
 };
 const char* noCmd = "\n";
 
